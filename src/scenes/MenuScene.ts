@@ -1,5 +1,4 @@
 import Phaser from 'phaser';
-import { GAME_HEIGHT } from '../config/gameConfig';
 
 export class MenuScene extends Phaser.Scene {
   constructor() {
