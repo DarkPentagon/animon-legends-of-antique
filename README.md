@@ -3,21 +3,25 @@
 An original 2D monster-catching RPG set in a fantasy world inspired by Antique, Philippines.
 
 ## Phase 1 — playable foundation
-
 - Phaser 3 + TypeScript + Vite
 - Main menu and playable village prototype
 - Four-direction movement, walking and Shift-to-run
 - Camera follow, world bounds and obstacle collisions
-- E interaction prompt and ESC pause menu
-- Responsive pixel-art canvas scaling
+
+## Phase 1.1 — village life
+- Procedurally drawn, original player and bicycle textures
+- Four-direction player walk animations and facing-aware idle frames
+- Bicycle mode (B) with faster movement
+- Three named villagers with rotating dialogue
+- NPC collision and proximity-based interaction (E)
+- Improved village collision footprints for trees, houses and community hall
+- On-screen control guide and welcome message
 
 ## Requirements
-
 - Node.js 20.19+ or 22.12+
 - npm
 
 ## Run locally
-
 ```bash
 npm install
 npm run dev
@@ -26,7 +30,6 @@ npm run dev
 Open the local URL printed by Vite.
 
 ## Verify
-
 ```bash
 npm run typecheck
 npm run build
@@ -34,18 +37,15 @@ npm run preview
 ```
 
 ## Controls
-
 | Key | Action |
 | --- | --- |
 | WASD / Arrow keys | Move |
 | Shift | Run |
-| E | Interact |
+| B | Toggle bicycle |
+| E | Talk to a nearby villager |
 | Escape | Pause / resume |
 
-Bicycle mode, creature selection, battles, quests, save slots, and multiplayer are planned for later milestones. The initial village and art are original prototype placeholders, not a finished map or final character art.
-
 ## Project structure
-
 - `src/scenes` — Phaser scenes
 - `src/entities` — player entity
 - `src/config` — game configuration
