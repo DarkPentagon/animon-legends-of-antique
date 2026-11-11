@@ -49,6 +49,13 @@ An original 2D monster-catching RPG set in a fantasy world inspired by Antique, 
 - An interactable supply chest grants three capture orbs once per browser save
 - Forest and village areas use camera-follow exploration, obstacles, landmarks, and area labels
 
+## Phase 1.6 — story and trainer adventures
+- Ate Lina offers the Forest Guardian quest: defeat three wild Animon
+- Quest progress persists in browser storage and rewards five capture orbs
+- Tomas challenges the player to a trainer battle against Thornhare
+- Trainer victories are saved and Tomas can be challenged once in this story chapter
+- Battle results distinguish trainer challenges from wild encounters
+
 ## Requirements
 - Node.js 20.19+ or 22.12+
 - npm
@@ -74,7 +81,7 @@ npm run preview
 | WASD / Arrow keys | Move |
 | Shift | Run |
 | B | Toggle bicycle |
-| E | Talk / heal / enter forest / open forest chest / return to village |
+| E | Talk / heal / accept quest / challenge trainer / enter forest / open chest / return |
 | P | Open party management in the village |
 | Walk through wild grass | Chance to encounter a wild Animon |
 | 1 / 2 | Basic attack / skill in battle |
