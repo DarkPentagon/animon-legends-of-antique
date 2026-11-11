@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GAME_HEIGHT } from '../config/gameConfig';
 import { Player } from '../entities/Player';
 import { PartyStore } from '../systems/partyStore';
+import { QuestStore } from '../systems/questStore';
 
 interface VillageCharacter {
   x: number;
@@ -51,6 +52,7 @@ export class WorldScene extends Phaser.Scene {
     this.physics.add.collider(this.player, obstacles);
 
     this.createVillageCharacters();
+    this.createTrainer();
     this.events.on('battle-finished', (result: string) => this.showMessage(result, 2600));
     this.cameras.main.setBounds(0, 0, 1800, 1200);
     this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
@@ -101,6 +103,17 @@ export class WorldScene extends Phaser.Scene {
     if (Phaser.Input.Keyboard.JustDown(this.interactKey)) this.interact();
   }
 
+  private createTrainer(): void {
+    const npc = this.add.container(1120, 510);
+    const body = this.add.rectangle(0, 0, 24, 27, 0x8b6db5).setStrokeStyle(2, 0x273b3c);
+    const head = this.add.circle(0, -19, 9, 0xf0c49a).setStrokeStyle(1, 0x49362c);
+    const label = this.add.text(0, -40, 'Tomas • Trainer', { fontSize: '11px', color: '#fff7dc', backgroundColor: '#24454a', padding: { x: 4, y: 2 } }).setOrigin(0.5);
+    npc.add([body, head, label]).setDepth(12);
+    const collider = this.add.rectangle(1120, 515, 27, 23, 0x000000, 0);
+    this.physics.add.existing(collider, true);
+    this.physics.add.collider(this.player, collider);
+  }
+
   private createVillageCharacters(): void {
     this.characters = [
       { x: 520, y: 350, name: 'Ate Lina', color: 0xe5a45e, dialogue: ['Maayong adlaw! Welcome to our little town.', 'They say unusual Animon have been seen near the old river.', 'Keep your eyes open, trainer. Antique has many secrets.'] },
@@ -139,7 +152,19 @@ export class WorldScene extends Phaser.Scene {
       }
     }
     if (!nearest) {
-      this.showMessage('There is no one nearby. Try approaching a villager.', 1800);
+      if (Phaser.Math.Distance.Between(this.player.x, this.player.y, 1120, 510) < 90) {
+        if (QuestStore.progress.trainerDefeated) this.showMessage('Tomas: You already won our friendly match. Keep training!', 2600);
+        else { this.scene.launch('BattleScene', { speciesId: 'thornhare', trainerId: 'belison-trainer', trainerName: 'Tomas' }); this.scene.pause(); }
+        return;
+      }
+      this.showMessage('There is no one nearby. Try approaching a villager or trainer.', 1800);
+      return;
+    }
+    if (nearest.name === 'Ate Lina') {
+      const progress = QuestStore.progress;
+      if (progress.questClaimed) this.showMessage('Ate Lina: Thank you for helping protect our village!', 3000);
+      else if (progress.wildWins >= 3 && QuestStore.claimWildQuest()) { PartyStore.grantCaptureOrbs(5); this.showMessage('QUEST COMPLETE: Forest Guardian! You received 5 capture orbs.', 3600); }
+      else this.showMessage(`QUEST: Forest Guardian — defeat 3 wild Animon. Progress: ${Math.min(progress.wildWins,3)}/3. Return to claim your reward.`, 3600);
       return;
     }
     if (nearest.name === 'Mila') {
