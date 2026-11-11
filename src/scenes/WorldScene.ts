@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_HEIGHT, GAME_WIDTH } from '../config/gameConfig';
+import { GAME_HEIGHT } from '../config/gameConfig';
 import { Player } from '../entities/Player';
 
 export class WorldScene extends Phaser.Scene {
