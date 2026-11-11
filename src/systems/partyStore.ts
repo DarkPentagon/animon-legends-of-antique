@@ -85,6 +85,10 @@ export const PartyStore = {
     captureOrbs = Math.min(99, captureOrbs + 5); persist();
   },
   get captureOrbs(): number { return captureOrbs; },
+  grantCaptureOrbs(amount: number): void {
+    captureOrbs = Math.min(99, captureOrbs + Math.max(0, Math.floor(amount)));
+    persist();
+  },
   useCaptureOrb(): boolean {
     if (captureOrbs <= 0) return false;
     captureOrbs -= 1; persist(); return true;
