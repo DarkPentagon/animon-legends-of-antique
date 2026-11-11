@@ -37,7 +37,7 @@ export class PartyScene extends Phaser.Scene {
         { fontSize: '16px', color: '#fff4d4', fontStyle: active ? 'bold' : 'normal' });
       const hp = member.hp <= 0 ? 'FAINTED' : `HP ${member.hp}/${species.maxHp + (member.level - 1) * 2}`;
       this.add.text(700, y - 10, hp, { fontSize: '14px', color: member.hp > 0 ? '#d9f0ce' : '#ffb4a8' }).setOrigin(0.5);
-      this.add.text(180, y + 8, `EXP ${member.xp}/${member.level * 20}`, { fontSize: '11px', color: '#c4d9c9' });
+      this.add.text(180, y + 8, `EXP ${member.xp}/${member.level * 20}${species.evolvesTo ? ` • Evolves at Lv. ${species.evolveAt}` : ''}`, { fontSize: '11px', color: '#c4d9c9' });
     });
     this.add.text(GAME_WIDTH / 2, 490, 'PRESS 1–6 TO SET ACTIVE ANIMON     ESC / P TO RETURN',
       { fontSize: '14px', color: '#fff4d4' }).setOrigin(0.5);
