@@ -1,11 +1,6 @@
 import { getAnimon } from '../data/animon';
 
-export interface PartyMember {
-  speciesId: string;
-  hp: number;
-  level: number;
-  xp: number;
-}
+export interface PartyMember { speciesId: string; hp: number; level: number; xp: number }
 interface SaveData { party: PartyMember[]; captureOrbs: number; activeIndex: number }
 const SAVE_KEY = 'animon-legends-save-v1';
 const MAX_LEVEL = 50;
@@ -13,20 +8,21 @@ const createMember = (speciesId: string): PartyMember => ({
   speciesId, hp: getAnimon(speciesId).maxHp, level: 1, xp: 0,
 });
 function loadSave(): SaveData {
-  const initial = { party: [createMember('spriglet')], captureOrbs: 5, activeIndex: 0 };
+  const initial: SaveData = { party: [createMember('spriglet')], captureOrbs: 5, activeIndex: 0 };
   try {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return initial;
     const value = JSON.parse(raw) as Partial<SaveData>;
     if (!Array.isArray(value.party) || !value.party.length) return initial;
-    const party = value.party.slice(0, 6).filter((m) =>
-      m && typeof m.speciesId === 'string' && Number.isFinite(m.hp) &&
-      Number.isFinite(m.level) && Number.isFinite(m.xp) && Boolean(getAnimon(m.speciesId))
-    ).map((m) => {
-      const species = getAnimon(m.speciesId);
-      const level = Math.min(MAX_LEVEL, Math.max(1, Math.floor(m.level)));
-      return { speciesId: m.speciesId, level, xp: Math.max(0, Math.floor(m.xp)),
-        hp: Math.min(species.maxHp + (level - 1) * 2, Math.max(0, Math.floor(m.hp))) };
+    const party = value.party.slice(0, 6).filter((member) => {
+      if (!member || typeof member.speciesId !== 'string' || !Number.isFinite(member.hp) ||
+          !Number.isFinite(member.level) || !Number.isFinite(member.xp)) return false;
+      try { getAnimon(member.speciesId); return true; } catch { return false; }
+    }).map((member) => {
+      const species = getAnimon(member.speciesId);
+      const level = Math.min(MAX_LEVEL, Math.max(1, Math.floor(member.level)));
+      return { speciesId: member.speciesId, level, xp: Math.max(0, Math.floor(member.xp)),
+        hp: Math.min(species.maxHp + (level - 1) * 2, Math.max(0, Math.floor(member.hp))) };
     });
     return { party: party.length ? party : initial.party,
       captureOrbs: Math.min(99, Math.max(0, Math.floor(value.captureOrbs ?? 5))),
@@ -53,23 +49,36 @@ export const PartyStore = {
   },
   add(speciesId: string): boolean {
     if (party.length >= 6) return false;
+    try { getAnimon(speciesId); } catch { return false; }
     party.push(createMember(speciesId)); persist(); return true;
   },
   updateActiveHp(hp: number): void {
     const member = party[activeIndex];
     if (member) { member.hp = Math.min(maxHp(member), Math.max(0, Math.floor(hp))); persist(); }
   },
-  awardActiveXp(amount: number): { gained: number; levels: number } {
+  awardActiveXp(amount: number): { gained: number; levels: number; evolution?: string } {
     const member = party[activeIndex];
     if (!member || amount <= 0) return { gained: 0, levels: 0 };
     const gained = Math.floor(amount);
     member.xp += gained;
     let levels = 0;
     while (member.level < MAX_LEVEL && member.xp >= member.level * 20) {
-      member.xp -= member.level * 20; member.level += 1;
-      member.hp = Math.min(maxHp(member), member.hp + 2); levels += 1;
+      member.xp -= member.level * 20;
+      member.level += 1;
+      levels += 1;
     }
-    persist(); return { gained, levels };
+    member.hp = Math.min(maxHp(member), member.hp + levels * 2);
+    const currentSpecies = getAnimon(member.speciesId);
+    let evolution: string | undefined;
+    if (currentSpecies.evolvesTo && member.level >= (currentSpecies.evolveAt ?? MAX_LEVEL)) {
+      const oldMax = maxHp(member);
+      member.speciesId = currentSpecies.evolvesTo;
+      const newMax = maxHp(member);
+      member.hp = Math.min(newMax, member.hp + (newMax - oldMax));
+      evolution = getAnimon(member.speciesId).name;
+    }
+    persist();
+    return { gained, levels, evolution };
   },
   healAll(): void {
     party.forEach((member) => { member.hp = maxHp(member); });
