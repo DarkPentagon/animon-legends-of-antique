@@ -84,7 +84,7 @@ export class WorldScene extends Phaser.Scene {
     const moving = Boolean(this.player.body?.velocity.length());
     if (inWildGrass && moving && !this.player.isRidingBicycle && this.encounterCooldown <= 0 && Math.random() < 0.018) {
       this.encounterCooldown = 6500;
-      const speciesId = Phaser.Math.RND.pick(['mossprout', 'embercub', 'tidefin']);
+      const speciesId = Phaser.Math.RND.pick(['mossprout', 'embercub', 'tidefin', 'thornhare', 'ashwing', 'brooklet']);
       this.scene.launch('BattleScene', { speciesId });
       this.scene.pause();
       return;
