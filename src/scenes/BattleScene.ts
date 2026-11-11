@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { getAnimon } from '../data/animon';
+import { getAnimon, getElementMultiplier } from '../data/animon';
 import { PartyStore } from '../systems/partyStore';
 import type { AnimonSpecies } from '../data/animon';
 import { GAME_HEIGHT, GAME_WIDTH } from '../config/gameConfig';
@@ -11,6 +11,8 @@ export class BattleScene extends Phaser.Scene {
   private status!: Phaser.GameObjects.Text;
   private wildBar!: Phaser.GameObjects.Rectangle;
   private playerBar!: Phaser.GameObjects.Rectangle;
+  private wildSprite!: Phaser.GameObjects.Graphics;
+  private heroSprite!: Phaser.GameObjects.Graphics;
   private locked = false;
   private keys!: { attack: Phaser.Input.Keyboard.Key; skill: Phaser.Input.Keyboard.Key; capture: Phaser.Input.Keyboard.Key; party: Phaser.Input.Keyboard.Key; back: Phaser.Input.Keyboard.Key };
 
@@ -39,10 +41,10 @@ export class BattleScene extends Phaser.Scene {
     this.add.rectangle(GAME_WIDTH / 2, 100, GAME_WIDTH, 150, 0x6c9c70);
     this.add.text(GAME_WIDTH / 2, 35, 'WILD ANIMON ENCOUNTER', { fontSize: '22px', color: '#173b42', fontStyle: 'bold' }).setOrigin(0.5);
 
-    this.drawCreature(680, 185, this.wild.color, this.wild.name);
+    this.wildSprite = this.drawCreature(680, 185, this.wild.color, this.wild.name);
     const lead = PartyStore.active();
     const hero = getAnimon(lead?.speciesId ?? 'spriglet');
-    this.drawCreature(255, 330, hero.color, hero.name);
+    this.heroSprite = this.drawCreature(255, 330, hero.color, hero.name);
 
     this.add.text(535, 270, `${this.wild.name}  •  ${this.wild.element}`, { fontSize: '18px', color: '#173b42', fontStyle: 'bold' });
     this.add.text(65, 400, `${hero.name}  •  ${hero.element}`, { fontSize: '18px', color: '#173b42', fontStyle: 'bold' });
@@ -71,16 +73,21 @@ export class BattleScene extends Phaser.Scene {
   private playerTurn(skill: boolean): void {
     const lead = PartyStore.active();
     const hero = getAnimon(lead?.speciesId ?? 'spriglet');
-    const damage = Math.max(2, hero.attack + (skill ? 5 : 0) + Phaser.Math.Between(-2, 2) - Math.floor(this.wild.defense / 2));
+    const multiplier = getElementMultiplier(hero.element, this.wild.element);
+    const damage = Math.max(2, Math.floor((hero.attack + (skill ? 5 : 0) + Phaser.Math.Between(-2, 2) - Math.floor(this.wild.defense / 2)) * multiplier));
+    this.tweens.add({ targets: this.heroSprite, x: this.heroSprite.x + 28, duration: 100, yoyo: true, ease: 'Quad.Out' });
+    this.tweens.add({ targets: this.wildSprite, alpha: 0.35, duration: 90, yoyo: true, repeat: 1 });
     this.wildHp = Math.max(0, this.wildHp - damage);
     this.wildBar.width = 210 * (this.wildHp / this.wild.maxHp);
-    this.refreshStatus(`${hero.name} used ${skill ? hero.skills[1] : hero.skills[0]}! ${damage} damage!`);
+    const effectiveness = multiplier > 1 ? ' It is super effective!' : multiplier < 1 ? ' It is not very effective.' : '';
+    this.refreshStatus(`${hero.name} used ${skill ? hero.skills[1] : hero.skills[0]}! ${damage} damage!${effectiveness}`);
     if (this.wildHp <= 0) {
       this.locked = true;
       PartyStore.updateActiveHp(this.playerHp);
       const reward = PartyStore.awardActiveXp(12 + this.wild.maxHp);
       const levelText = reward.levels ? ` Level up! Now Lv. ${PartyStore.active()?.level}.` : '';
-      this.time.delayedCall(900, () => this.finish(`${this.wild.name} was defeated! +${reward.gained} EXP.${levelText}`));
+      const evolutionText = reward.evolution ? ` Your Animon evolved into ${reward.evolution}!` : '';
+      this.time.delayedCall(900, () => this.finish(`${this.wild.name} was defeated! +${reward.gained} EXP.${levelText}${evolutionText}`));
       return;
     }
     this.enemyTurn();
@@ -91,7 +98,9 @@ export class BattleScene extends Phaser.Scene {
     this.time.delayedCall(700, () => {
       const lead = PartyStore.active();
       const hero = getAnimon(lead?.speciesId ?? 'spriglet');
-      const damage = Math.max(1, this.wild.attack - Math.floor(hero.defense / 2) + Phaser.Math.Between(-1, 2));
+      const multiplier = getElementMultiplier(this.wild.element, hero.element);
+      const damage = Math.max(1, Math.floor((this.wild.attack - Math.floor(hero.defense / 2) + Phaser.Math.Between(-1, 2)) * multiplier));
+      this.tweens.add({ targets: this.heroSprite, x: this.heroSprite.x - 18, duration: 90, yoyo: true, repeat: 1, ease: 'Quad.Out' });
       this.playerHp = Math.max(0, this.playerHp - damage);
       this.playerBar.width = 210 * (this.playerHp / hero.maxHp);
       PartyStore.updateActiveHp(this.playerHp);
@@ -131,7 +140,7 @@ export class BattleScene extends Phaser.Scene {
     this.refreshStatus(`Party: ${names.join(' • ')} | Capture orbs: ${PartyStore.captureOrbs}`);
   }
 
-  private drawCreature(x: number, y: number, color: number, name: string): void {
+  private drawCreature(x: number, y: number, color: number, name: string): Phaser.GameObjects.Graphics {
     const shape = this.add.graphics();
     shape.fillStyle(0x1b3b35, 0.18).fillEllipse(x, y + 38, 120, 24);
     shape.fillStyle(color).fillEllipse(x, y, 88, 70);
@@ -139,6 +148,7 @@ export class BattleScene extends Phaser.Scene {
     shape.fillStyle(0x173b42).fillCircle(x - 20, y - 8, 4).fillCircle(x + 20, y - 8, 4);
     shape.fillStyle(0xf5d9a5).fillEllipse(x, y + 17, 34, 13);
     this.add.text(x, y + 58, name, { fontSize: '13px', color: '#173b42', fontStyle: 'bold' }).setOrigin(0.5);
+    return shape;
   }
 
   private refreshStatus(value: string): void { this.status.setText(value); }
