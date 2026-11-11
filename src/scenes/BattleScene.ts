@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { getAnimon, ANIMON } from '../data/animon';
+import { getAnimon } from '../data/animon';
 import { PartyStore } from '../systems/partyStore';
 import type { AnimonSpecies } from '../data/animon';
 import { GAME_HEIGHT, GAME_WIDTH } from '../config/gameConfig';
