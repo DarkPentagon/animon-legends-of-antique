@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT } from '../config/gameConfig';
 import { Player } from '../entities/Player';
+import { PartyStore } from '../systems/partyStore';
 
 interface VillageCharacter {
   x: number;
@@ -14,6 +15,7 @@ export class WorldScene extends Phaser.Scene {
   private player!: Player;
   private interactKey!: Phaser.Input.Keyboard.Key;
   private pauseKey!: Phaser.Input.Keyboard.Key;
+  private partyKey!: Phaser.Input.Keyboard.Key;
   private message!: Phaser.GameObjects.Text;
   private messageTimer?: Phaser.Time.TimerEvent;
   private characters: VillageCharacter[] = [];
@@ -58,6 +60,7 @@ export class WorldScene extends Phaser.Scene {
     if (!keyboard) throw new Error('Keyboard input is unavailable.');
     this.interactKey = keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
     this.pauseKey = keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
+    this.partyKey = keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P);
     this.message = this.add.text(0, 0, '', {
       fontSize: '14px', color: '#fff5d6', backgroundColor: '#182f31',
       padding: { x: 12, y: 8 }, wordWrap: { width: 520 },
@@ -67,7 +70,7 @@ export class WorldScene extends Phaser.Scene {
       fontSize: '13px', color: '#fff4d4', backgroundColor: '#173b42',
       padding: { x: 10, y: 7 },
     }).setScrollFactor(0).setDepth(100);
-    this.add.text(16, GAME_HEIGHT - 24, 'WASD / ARROWS: MOVE   SHIFT: RUN   B: BICYCLE   E: TALK   GRASS: WILD ANIMON   ESC: PAUSE', {
+    this.add.text(16, GAME_HEIGHT - 24, 'WASD / ARROWS: MOVE   SHIFT: RUN   B: BICYCLE   E: TALK / HEAL   P: PARTY   GRASS: WILD ANIMON   ESC: PAUSE', {
       fontSize: '11px', color: '#fff4d4', backgroundColor: '#173b42',
       padding: { x: 8, y: 5 },
     }).setScrollFactor(0).setDepth(100);
@@ -86,6 +89,11 @@ export class WorldScene extends Phaser.Scene {
       this.scene.pause();
       return;
     }
+    if (Phaser.Input.Keyboard.JustDown(this.partyKey)) {
+      this.scene.launch('PartyScene');
+      this.scene.pause();
+      return;
+    }
     if (Phaser.Input.Keyboard.JustDown(this.pauseKey)) {
       this.scene.launch('PauseScene');
       this.scene.pause();
@@ -98,6 +106,7 @@ export class WorldScene extends Phaser.Scene {
       { x: 520, y: 350, name: 'Ate Lina', color: 0xe5a45e, dialogue: ['Maayong adlaw! Welcome to our little town.', 'They say unusual Animon have been seen near the old river.', 'Keep your eyes open, trainer. Antique has many secrets.'] },
       { x: 930, y: 590, name: 'Mang Isko', color: 0x6c91c8, dialogue: ['The road beside the river leads to the wild grasslands.', 'A bicycle makes long journeys much faster. Press B to ride or park it.'] },
       { x: 570, y: 880, name: 'Nena', color: 0xc77c9a, dialogue: ['The community hall is where neighbors gather.', 'One day, trainers from all over Antique will meet here.'] },
+      { x: 820, y: 850, name: 'Mila', color: 0x72b7a5, dialogue: ['Welcome to the village healing station!', 'Your Animon are all rested. I also replenished five capture orbs.'] },
     ];
 
     for (const character of this.characters) {
@@ -127,6 +136,11 @@ export class WorldScene extends Phaser.Scene {
     }
     if (!nearest) {
       this.showMessage('There is no one nearby. Try approaching a villager.', 1800);
+      return;
+    }
+    if (nearest.name === 'Mila') {
+      PartyStore.healAll();
+      this.showMessage('Mila: Your whole party is fully healed, and you received 5 capture orbs!', 3600);
       return;
     }
     const index = this.dialogueIndex.get(nearest.name) ?? 0;
