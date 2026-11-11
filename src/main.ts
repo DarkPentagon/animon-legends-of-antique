@@ -7,10 +7,11 @@ import { WorldScene } from './scenes/WorldScene';
 import { PauseScene } from './scenes/PauseScene';
 import { BattleScene } from './scenes/BattleScene';
 import { PartyScene } from './scenes/PartyScene';
+import { ForestScene } from './scenes/ForestScene';
 import './styles/game.css';
 
 new Phaser.Game({
   ...gameConfig,
   parent: 'app',
-  scene: [BootScene, PreloadScene, MenuScene, WorldScene, PauseScene, BattleScene, PartyScene],
+  scene: [BootScene, PreloadScene, MenuScene, WorldScene, ForestScene, PauseScene, BattleScene, PartyScene],
 });
