@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { getAnimon, getElementMultiplier } from '../data/animon';
 import { PartyStore } from '../systems/partyStore';
+import { QuestStore } from '../systems/questStore';
 import type { AnimonSpecies } from '../data/animon';
 import { GAME_HEIGHT, GAME_WIDTH } from '../config/gameConfig';
 
@@ -14,12 +15,16 @@ export class BattleScene extends Phaser.Scene {
   private wildSprite!: Phaser.GameObjects.Graphics;
   private heroSprite!: Phaser.GameObjects.Graphics;
   private locked = false;
+  private trainerId?: string;
+  private trainerName?: string;
   private keys!: { attack: Phaser.Input.Keyboard.Key; skill: Phaser.Input.Keyboard.Key; capture: Phaser.Input.Keyboard.Key; party: Phaser.Input.Keyboard.Key; back: Phaser.Input.Keyboard.Key };
 
   constructor() { super('BattleScene'); }
 
-  init(data: { speciesId?: string }): void {
+  init(data: { speciesId?: string; trainerId?: string; trainerName?: string }): void {
     this.wild = getAnimon(data.speciesId ?? 'mossprout');
+    this.trainerId = data.trainerId;
+    this.trainerName = data.trainerName;
     this.wildHp = this.wild.maxHp;
     const lead = PartyStore.active();
     this.playerHp = lead?.hp ?? getAnimon('spriglet').maxHp;
@@ -39,7 +44,7 @@ export class BattleScene extends Phaser.Scene {
 
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x9bc58b);
     this.add.rectangle(GAME_WIDTH / 2, 100, GAME_WIDTH, 150, 0x6c9c70);
-    this.add.text(GAME_WIDTH / 2, 35, 'WILD ANIMON ENCOUNTER', { fontSize: '22px', color: '#173b42', fontStyle: 'bold' }).setOrigin(0.5);
+    this.add.text(GAME_WIDTH / 2, 35, this.trainerName ? `TRAINER CHALLENGE  •  ${this.trainerName}` : 'WILD ANIMON ENCOUNTER', { fontSize: '22px', color: '#173b42', fontStyle: 'bold' }).setOrigin(0.5);
 
     this.wildSprite = this.drawCreature(680, 185, this.wild.color, this.wild.name);
     const lead = PartyStore.active();
@@ -85,9 +90,11 @@ export class BattleScene extends Phaser.Scene {
       this.locked = true;
       PartyStore.updateActiveHp(this.playerHp);
       const reward = PartyStore.awardActiveXp(12 + this.wild.maxHp);
+      if (this.trainerId) QuestStore.completeTrainer(this.trainerId);
+      else QuestStore.recordWildVictory();
       const levelText = reward.levels ? ` Level up! Now Lv. ${PartyStore.active()?.level}.` : '';
       const evolutionText = reward.evolution ? ` Your Animon evolved into ${reward.evolution}!` : '';
-      this.time.delayedCall(900, () => this.finish(`${this.wild.name} was defeated! +${reward.gained} EXP.${levelText}${evolutionText}`));
+      this.time.delayedCall(900, () => this.finish(`${this.trainerName ? `${this.trainerName}'s ` : ''}${this.wild.name} was defeated! +${reward.gained} EXP.${levelText}${evolutionText}`));
       return;
     }
     this.enemyTurn();
