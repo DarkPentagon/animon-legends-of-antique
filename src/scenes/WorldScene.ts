@@ -2,11 +2,22 @@ import Phaser from 'phaser';
 import { GAME_HEIGHT } from '../config/gameConfig';
 import { Player } from '../entities/Player';
 
+interface VillageCharacter {
+  x: number;
+  y: number;
+  name: string;
+  dialogue: string[];
+  color: number;
+}
+
 export class WorldScene extends Phaser.Scene {
   private player!: Player;
   private interactKey!: Phaser.Input.Keyboard.Key;
   private pauseKey!: Phaser.Input.Keyboard.Key;
   private message!: Phaser.GameObjects.Text;
+  private messageTimer?: Phaser.Time.TimerEvent;
+  private characters: VillageCharacter[] = [];
+  private dialogueIndex = new Map<string, number>();
 
   constructor() {
     super('WorldScene');
@@ -23,8 +34,18 @@ export class WorldScene extends Phaser.Scene {
     this.addObstacle(obstacles, 720, 210, 150, 100);
     this.addObstacle(obstacles, 1050, 420, 190, 110);
     this.addObstacle(obstacles, 1360, 260, 170, 100);
+    // Tree trunks and the community hall foundation have solid footprints.
+    for (let i = 0; i < 42; i += 1) {
+      const x = 35 + ((i * 137) % 1320);
+      const y = 35 + ((i * 89) % 1080);
+      if ((x > 180 && x < 370 && y > 150 && y < 320) ||
+          (x > 630 && x < 810) || (x > 1000 && x < 1200 && y > 350 && y < 520)) continue;
+      this.addObstacle(obstacles, x, y + 8, 22, 18);
+    }
+    this.addObstacle(obstacles, 590, 755, 300, 90);
     this.physics.add.collider(this.player, obstacles);
 
+    this.createVillageCharacters();
     this.cameras.main.setBounds(0, 0, 1800, 1200);
     this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
     this.cameras.main.setZoom(1);
@@ -35,17 +56,18 @@ export class WorldScene extends Phaser.Scene {
     this.pauseKey = keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
     this.message = this.add.text(0, 0, '', {
       fontSize: '14px', color: '#fff5d6', backgroundColor: '#182f31',
-      padding: { x: 12, y: 8 },
+      padding: { x: 12, y: 8 }, wordWrap: { width: 520 },
     }).setScrollFactor(0).setDepth(100).setVisible(false);
 
     this.add.text(16, 16, 'FANTASY BELISON  •  VILLAGE OUTSKIRTS', {
       fontSize: '13px', color: '#fff4d4', backgroundColor: '#173b42',
       padding: { x: 10, y: 7 },
     }).setScrollFactor(0).setDepth(100);
-    this.add.text(16, GAME_HEIGHT - 24, 'WASD / ARROWS: MOVE    SHIFT: RUN    E: INTERACT    ESC: PAUSE', {
+    this.add.text(16, GAME_HEIGHT - 24, 'WASD / ARROWS: MOVE   SHIFT: RUN   B: BICYCLE   E: TALK   ESC: PAUSE', {
       fontSize: '11px', color: '#fff4d4', backgroundColor: '#173b42',
       padding: { x: 8, y: 5 },
     }).setScrollFactor(0).setDepth(100);
+    this.showMessage('Welcome to Belison! Talk to the locals and explore the village. Press B to ride your bicycle.', 4200);
   }
 
   update(): void {
@@ -54,10 +76,54 @@ export class WorldScene extends Phaser.Scene {
       this.scene.launch('PauseScene');
       this.scene.pause();
     }
-    if (Phaser.Input.Keyboard.JustDown(this.interactKey)) {
-      this.message.setText('The village path leads to new adventures!').setVisible(true);
-      this.time.delayedCall(2200, () => this.message?.setVisible(false));
+    if (Phaser.Input.Keyboard.JustDown(this.interactKey)) this.interact();
+  }
+
+  private createVillageCharacters(): void {
+    this.characters = [
+      { x: 520, y: 350, name: 'Ate Lina', color: 0xe5a45e, dialogue: ['Maayong adlaw! Welcome to our little town.', 'They say unusual Animon have been seen near the old river.', 'Keep your eyes open, trainer. Antique has many secrets.'] },
+      { x: 930, y: 590, name: 'Mang Isko', color: 0x6c91c8, dialogue: ['The road beside the river leads to the wild grasslands.', 'A bicycle makes long journeys much faster. Press B to ride or park it.'] },
+      { x: 570, y: 880, name: 'Nena', color: 0xc77c9a, dialogue: ['The community hall is where neighbors gather.', 'One day, trainers from all over Antique will meet here.'] },
+    ];
+
+    for (const character of this.characters) {
+      const npc = this.add.container(character.x, character.y);
+      const body = this.add.rectangle(0, 0, 22, 25, character.color).setStrokeStyle(2, 0x273b3c);
+      const head = this.add.circle(0, -18, 9, 0xf0c49a).setStrokeStyle(1, 0x49362c);
+      const marker = this.add.text(0, -38, character.name, {
+        fontSize: '11px', color: '#fff7dc', backgroundColor: '#24454a',
+        padding: { x: 4, y: 2 },
+      }).setOrigin(0.5);
+      npc.add([body, head, marker]).setDepth(12);
+      const collider = this.add.rectangle(character.x, character.y + 5, 25, 22, 0x000000, 0);
+      this.physics.add.existing(collider, true);
+      this.physics.add.collider(this.player, collider);
     }
+  }
+
+  private interact(): void {
+    let nearest: VillageCharacter | undefined;
+    let nearestDistance = 82;
+    for (const character of this.characters) {
+      const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, character.x, character.y);
+      if (distance < nearestDistance) {
+        nearest = character;
+        nearestDistance = distance;
+      }
+    }
+    if (!nearest) {
+      this.showMessage('There is no one nearby. Try approaching a villager.', 1800);
+      return;
+    }
+    const index = this.dialogueIndex.get(nearest.name) ?? 0;
+    this.showMessage(`${nearest.name}: ${nearest.dialogue[index]}`, 3600);
+    this.dialogueIndex.set(nearest.name, (index + 1) % nearest.dialogue.length);
+  }
+
+  private showMessage(message: string, duration: number): void {
+    this.messageTimer?.remove(false);
+    this.message.setText(message).setVisible(true);
+    this.messageTimer = this.time.delayedCall(duration, () => this.message.setVisible(false));
   }
 
   private drawVillage(): void {
