@@ -42,6 +42,13 @@ An original 2D monster-catching RPG set in a fantasy world inspired by Antique, 
 - Disadvantaged attacks deal reduced damage; advantaged attacks deal increased damage
 - Battle hit animations with creature movement and damage flashes
 
+## Phase 1.5 — adventure and exploration
+- A connected Sundering Forest area reached from the eastern village trail
+- Return trail links the forest back to Belison village
+- Forest wild-grass encounters use the existing turn-based battle system
+- An interactable supply chest grants three capture orbs once per browser save
+- Forest and village areas use camera-follow exploration, obstacles, landmarks, and area labels
+
 ## Requirements
 - Node.js 20.19+ or 22.12+
 - npm
@@ -67,7 +74,7 @@ npm run preview
 | WASD / Arrow keys | Move |
 | Shift | Run |
 | B | Toggle bicycle |
-| E | Talk to a villager / heal at Mila's station |
+| E | Talk / heal / enter forest / open forest chest / return to village |
 | P | Open party management in the village |
 | Walk through wild grass | Chance to encounter a wild Animon |
 | 1 / 2 | Basic attack / skill in battle |
