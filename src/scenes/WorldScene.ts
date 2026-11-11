@@ -18,6 +18,8 @@ export class WorldScene extends Phaser.Scene {
   private messageTimer?: Phaser.Time.TimerEvent;
   private characters: VillageCharacter[] = [];
   private dialogueIndex = new Map<string, number>();
+  private encounterCooldown = 0;
+  private encounterZone!: Phaser.Geom.Rectangle;
 
   constructor() {
     super('WorldScene');
@@ -26,6 +28,7 @@ export class WorldScene extends Phaser.Scene {
   create(): void {
     this.physics.world.setBounds(0, 0, 1800, 1200);
     this.drawVillage();
+    this.encounterZone = new Phaser.Geom.Rectangle(1080, 700, 280, 330);
     this.player = new Player(this, 460, 330);
     this.physics.world.setBoundsCollision(true, true, true, true);
 
@@ -46,6 +49,7 @@ export class WorldScene extends Phaser.Scene {
     this.physics.add.collider(this.player, obstacles);
 
     this.createVillageCharacters();
+    this.events.on('battle-finished', (result: string) => this.showMessage(result, 2600));
     this.cameras.main.setBounds(0, 0, 1800, 1200);
     this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
     this.cameras.main.setZoom(1);
@@ -63,7 +67,7 @@ export class WorldScene extends Phaser.Scene {
       fontSize: '13px', color: '#fff4d4', backgroundColor: '#173b42',
       padding: { x: 10, y: 7 },
     }).setScrollFactor(0).setDepth(100);
-    this.add.text(16, GAME_HEIGHT - 24, 'WASD / ARROWS: MOVE   SHIFT: RUN   B: BICYCLE   E: TALK   ESC: PAUSE', {
+    this.add.text(16, GAME_HEIGHT - 24, 'WASD / ARROWS: MOVE   SHIFT: RUN   B: BICYCLE   E: TALK   GRASS: WILD ANIMON   ESC: PAUSE', {
       fontSize: '11px', color: '#fff4d4', backgroundColor: '#173b42',
       padding: { x: 8, y: 5 },
     }).setScrollFactor(0).setDepth(100);
@@ -72,6 +76,16 @@ export class WorldScene extends Phaser.Scene {
 
   update(): void {
     this.player.update();
+    this.encounterCooldown = Math.max(0, this.encounterCooldown - this.game.loop.delta);
+    const inWildGrass = Phaser.Geom.Rectangle.Contains(this.encounterZone, this.player.x, this.player.y);
+    const moving = Boolean(this.player.body?.velocity.length());
+    if (inWildGrass && moving && !this.player.isRidingBicycle && this.encounterCooldown <= 0 && Math.random() < 0.018) {
+      this.encounterCooldown = 6500;
+      const speciesId = Phaser.Math.RND.pick(['mossprout', 'embercub', 'tidefin']);
+      this.scene.launch('BattleScene', { speciesId });
+      this.scene.pause();
+      return;
+    }
     if (Phaser.Input.Keyboard.JustDown(this.pauseKey)) {
       this.scene.launch('PauseScene');
       this.scene.pause();
@@ -132,7 +146,7 @@ export class WorldScene extends Phaser.Scene {
     g.fillStyle(0x83bd70).fillRect(0, 780, 1800, 420);
     g.fillStyle(0xc9ad78).fillRect(0, 500, 1800, 120);
     g.fillRect(790, 0, 120, 1200);
-    g.fillStyle(0x4a9caa).fillRect(1450, 0, 350, 1200);
+    // Wild grass patch: the first place trainers can encounter Animon.\n    g.fillStyle(0x4a9caa).fillRect(1450, 0, 350, 1200);\n    g.fillStyle(0x4f8d48).fillRect(1080, 700, 280, 330);\n    for (let i = 0; i < 90; i += 1) {\n      const x = 1090 + ((i * 37) % 260);\n      const y = 710 + ((i * 53) % 310);\n      g.lineStyle(2, i % 2 ? 0x9bc86a : 0x6eaa62).lineBetween(x, y + 8, x + 3, y - 5);\n    }\n    this.add.text(1220, 690, 'WILD GRASS', { fontSize: '13px', color: '#f5edc7', backgroundColor: '#315b3c', padding: { x: 7, y: 4 } }).setOrigin(0.5);
     g.fillStyle(0xe4d09a).fillRect(1390, 0, 60, 1200);
 
     for (let i = 0; i < 42; i += 1) {
