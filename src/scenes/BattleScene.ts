@@ -69,7 +69,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private playerTurn(skill: boolean): void {
-    const lead = PartyStore.members()[0];
+    const lead = PartyStore.active();
     const hero = getAnimon(lead?.speciesId ?? 'spriglet');
     const damage = Math.max(2, hero.attack + (skill ? 5 : 0) + Phaser.Math.Between(-2, 2) - Math.floor(this.wild.defense / 2));
     this.wildHp = Math.max(0, this.wildHp - damage);
@@ -89,12 +89,12 @@ export class BattleScene extends Phaser.Scene {
   private enemyTurn(): void {
     this.locked = true;
     this.time.delayedCall(700, () => {
-      const lead = PartyStore.members()[0];
+      const lead = PartyStore.active();
       const hero = getAnimon(lead?.speciesId ?? 'spriglet');
       const damage = Math.max(1, this.wild.attack - Math.floor(hero.defense / 2) + Phaser.Math.Between(-1, 2));
       this.playerHp = Math.max(0, this.playerHp - damage);
       this.playerBar.width = 210 * (this.playerHp / hero.maxHp);
-      PartyStore.updateFirstHp(this.playerHp);
+      PartyStore.updateActiveHp(this.playerHp);
       if (this.playerHp <= 0) {
         this.refreshStatus(`${this.wild.name} knocked out ${hero.name}. You retreat to the village.`);
         this.time.delayedCall(1200, () => this.finish('Your lead Animon needs rest. You returned to the village.'));
