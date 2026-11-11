@@ -160,7 +160,15 @@ export class WorldScene extends Phaser.Scene {
     g.fillStyle(0x83bd70).fillRect(0, 780, 1800, 420);
     g.fillStyle(0xc9ad78).fillRect(0, 500, 1800, 120);
     g.fillRect(790, 0, 120, 1200);
-    // Wild grass patch: the first place trainers can encounter Animon.\n    g.fillStyle(0x4a9caa).fillRect(1450, 0, 350, 1200);\n    g.fillStyle(0x4f8d48).fillRect(1080, 700, 280, 330);\n    for (let i = 0; i < 90; i += 1) {\n      const x = 1090 + ((i * 37) % 260);\n      const y = 710 + ((i * 53) % 310);\n      g.lineStyle(2, i % 2 ? 0x9bc86a : 0x6eaa62).lineBetween(x, y + 8, x + 3, y - 5);\n    }\n    this.add.text(1220, 690, 'WILD GRASS', { fontSize: '13px', color: '#f5edc7', backgroundColor: '#315b3c', padding: { x: 7, y: 4 } }).setOrigin(0.5);
+    // Wild grass patch: the first place trainers can encounter Animon.
+    g.fillStyle(0x4a9caa).fillRect(1450, 0, 350, 1200);
+    g.fillStyle(0x4f8d48).fillRect(1080, 700, 280, 330);
+    for (let i = 0; i < 90; i += 1) {
+      const x = 1090 + ((i * 37) % 260);
+      const y = 710 + ((i * 53) % 310);
+      g.lineStyle(2, i % 2 ? 0x9bc86a : 0x6eaa62).lineBetween(x, y + 8, x + 3, y - 5);
+    }
+    this.add.text(1220, 690, 'WILD GRASS', { fontSize: '13px', color: '#f5edc7', backgroundColor: '#315b3c', padding: { x: 7, y: 4 } }).setOrigin(0.5);
     g.fillStyle(0xe4d09a).fillRect(1390, 0, 60, 1200);
 
     for (let i = 0; i < 42; i += 1) {
