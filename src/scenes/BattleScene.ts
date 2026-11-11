@@ -19,7 +19,7 @@ export class BattleScene extends Phaser.Scene {
   init(data: { speciesId?: string }): void {
     this.wild = getAnimon(data.speciesId ?? 'mossprout');
     this.wildHp = this.wild.maxHp;
-    const lead = PartyStore.members()[0];
+    const lead = PartyStore.active();
     this.playerHp = lead?.hp ?? getAnimon('spriglet').maxHp;
     this.locked = false;
   }
@@ -40,7 +40,7 @@ export class BattleScene extends Phaser.Scene {
     this.add.text(GAME_WIDTH / 2, 35, 'WILD ANIMON ENCOUNTER', { fontSize: '22px', color: '#173b42', fontStyle: 'bold' }).setOrigin(0.5);
 
     this.drawCreature(680, 185, this.wild.color, this.wild.name);
-    const lead = PartyStore.members()[0];
+    const lead = PartyStore.active();
     const hero = getAnimon(lead?.speciesId ?? 'spriglet');
     this.drawCreature(255, 330, hero.color, hero.name);
 
@@ -77,8 +77,10 @@ export class BattleScene extends Phaser.Scene {
     this.refreshStatus(`${hero.name} used ${skill ? hero.skills[1] : hero.skills[0]}! ${damage} damage!`);
     if (this.wildHp <= 0) {
       this.locked = true;
-      PartyStore.updateFirstHp(this.playerHp);
-      this.time.delayedCall(900, () => this.finish(`${this.wild.name} was defeated! Your Animon gained experience.`));
+      PartyStore.updateActiveHp(this.playerHp);
+      const reward = PartyStore.awardActiveXp(12 + this.wild.maxHp);
+      const levelText = reward.levels ? ` Level up! Now Lv. ${PartyStore.active()?.level}.` : '';
+      this.time.delayedCall(900, () => this.finish(`${this.wild.name} was defeated! +${reward.gained} EXP.${levelText}`));
       return;
     }
     this.enemyTurn();
@@ -104,11 +106,11 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private capture(): void {
+    if (this.wildHp <= 0) return;
     if (!PartyStore.useCaptureOrb()) {
       this.refreshStatus('You are out of capture orbs. Visit the village to restock later.');
       return;
     }
-    if (this.wildHp <= 0) return;
     const chance = Phaser.Math.Clamp(0.25 + (1 - this.wildHp / this.wild.maxHp) * 0.65, 0.25, 0.9);
     if (Math.random() < chance) {
       const added = PartyStore.add(this.wild.id);
