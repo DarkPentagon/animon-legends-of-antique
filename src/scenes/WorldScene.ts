@@ -125,6 +125,10 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private interact(): void {
+    if (Phaser.Math.Distance.Between(this.player.x, this.player.y, 1410, 600) < 90) {
+      this.scene.start('ForestScene');
+      return;
+    }
     let nearest: VillageCharacter | undefined;
     let nearestDistance = 82;
     for (const character of this.characters) {
@@ -187,6 +191,8 @@ export class WorldScene extends Phaser.Scene {
     this.drawHouse(g, 1360, 260);
     g.fillStyle(0xeadcae).fillRect(410, 690, 360, 150);
     g.fillStyle(0x9a5a42).fillRect(445, 660, 290, 55);
+    this.add.text(1410, 555, 'FOREST TRAIL  →', { fontSize: '13px', color: '#fff4d4', backgroundColor: '#315b3c', padding: { x: 7, y: 4 } }).setOrigin(0.5);
+    g.fillStyle(0xc9ad78).fillRect(1320, 575, 125, 50);
     this.add.text(590, 755, 'COMMUNITY HALL', {
       fontSize: '15px', color: '#493c2c', fontStyle: 'bold',
     }).setOrigin(0.5);
