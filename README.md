@@ -49,6 +49,14 @@ An original 2D monster-catching RPG set in a fantasy world inspired by Antique, 
 - An interactable supply chest grants three capture orbs once per browser save
 - Forest and village areas use camera-follow exploration, obstacles, landmarks, and area labels
 
+## Phase 1.7 — illustrated main menu
+- Custom Phaser-drawn title screen inspired by Antique's coastal landscapes, rice terraces, mountains, and village architecture
+- Original trainer and three elemental companion illustrations
+- New Game, Continue, Settings, and Credits menu options
+- Continue is disabled until a browser save is detected
+- Keyboard navigation with arrow keys / WASD and Enter / Space; mouse hover and click are supported
+- Settings panel includes the core control guide
+
 ## Phase 1.6 — story and trainer adventures
 - Ate Lina offers the Forest Guardian quest: defeat three wild Animon
 - Quest progress persists in browser storage and rewards five capture orbs
