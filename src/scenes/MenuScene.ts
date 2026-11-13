@@ -8,8 +8,6 @@ export class MenuScene extends Phaser.Scene {
   private menuItems: Phaser.GameObjects.Container[] = [];
   private statusText!: Phaser.GameObjects.Text;
   private hasSave = false;
-  private settingsOpen = false;
-  private creditsOpen = false;
 
   constructor() {
     super('MenuScene');
@@ -150,7 +148,7 @@ export class MenuScene extends Phaser.Scene {
       this.add.circle(13, -15, 19, color).setStrokeStyle(3, 0x263f3d),
       this.add.circle(19, -17, 4, 0xffffff),
       this.add.circle(20, -17, 2, 0x26333a),
-      this.add.triangle(-17, -20, -25, -42, -3, -29, kind === 'fire' ? 0xf6b84c : kind === 'water' ? 0x9bd7f2 : 0x6eaa42),
+      this.add.triangle(-17, -20, -25, -42, -3, -29, 5, -43, kind === 'fire' ? 0xf6b84c : kind === 'water' ? 0x9bd7f2 : 0x6eaa42),
     ]);
     if (kind === 'leaf') {
       c.add(this.add.ellipse(-12, -34, 17, 28, 0x7ebd46, 0).setStrokeStyle(4, 0x7ebd46).setAngle(-35));
@@ -241,7 +239,6 @@ export class MenuScene extends Phaser.Scene {
 
   private openSettings(): void {
     this.closePanels();
-    this.settingsOpen = true;
     const panel = this.add.container(GAME_WIDTH / 2, GAME_HEIGHT / 2).setDepth(60);
     panel.add([
       this.add.rectangle(0, 0, 430, 220, 0x102b3d, 0.98).setStrokeStyle(3, 0xe0bf78),
@@ -251,14 +248,13 @@ export class MenuScene extends Phaser.Scene {
       this.add.text(0, 44, 'Party: P     •     Pause: ESC', { fontSize: '13px', color: '#fff1d0' }).setOrigin(0.5),
     ]);
     const close = this.add.text(0, 83, 'CLOSE', { fontSize: '16px', color: '#ffdf8b', backgroundColor: '#754638', padding: { x: 16, y: 7 } }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    close.on('pointerdown', () => { panel.destroy(); this.settingsOpen = false; });
+    close.on('pointerdown', () => { panel.destroy(); });
     panel.add(close);
     this.input.keyboard?.once('keydown-ESC', () => { panel.destroy(); this.settingsOpen = false; });
   }
 
   private openCredits(): void {
     this.closePanels();
-    this.creditsOpen = true;
     const panel = this.add.container(GAME_WIDTH / 2, GAME_HEIGHT / 2).setDepth(60);
     panel.add([
       this.add.rectangle(0, 0, 430, 205, 0x102b3d, 0.98).setStrokeStyle(3, 0xe0bf78),
@@ -268,14 +264,12 @@ export class MenuScene extends Phaser.Scene {
       this.add.text(0, 38, 'Western Visayas, Philippines.', { fontSize: '12px', color: '#fff1d0' }).setOrigin(0.5),
     ]);
     const close = this.add.text(0, 76, 'BACK', { fontSize: '16px', color: '#ffdf8b', backgroundColor: '#754638', padding: { x: 16, y: 7 } }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    close.on('pointerdown', () => { panel.destroy(); this.creditsOpen = false; });
+    close.on('pointerdown', () => { panel.destroy(); });
     panel.add(close);
     this.input.keyboard?.once('keydown-ESC', () => { panel.destroy(); this.creditsOpen = false; });
   }
 
   private closePanels(): void {
     this.children.list.filter((child) => child.depth === 60).forEach((child) => child.destroy());
-    this.settingsOpen = false;
-    this.creditsOpen = false;
   }
 }
